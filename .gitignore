@@ -1,4 +1,4 @@
-syntax: glob
+/*.exe
 *.obj
 *.pdb
 *.user
