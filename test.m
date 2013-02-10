@@ -1,13 +1,18 @@
 #import <Foundation/Foundation.h>
 #import "rest.h"
 
+
+//typedef void (^PSBAction)(NSString *result);
+	
 int main (int argc, const char * argv[])
 {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	
-	NSString *json = @"{\"name\" : \"ChatTopic\"}"; 
-	
-	[[RestHelper instance] Invoke: @"SelectTopic" json: json];
+	NSDictionary *value = [[[NSDictionary alloc] initWithObjectsAndKeys: 
+        @"ChatTopic", @"name",
+		nil] autorelease];
+
+	[[RestHelper instance] Invoke: @"SelectTopic" value:value];
 	
 	[pool drain];
 		
