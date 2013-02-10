@@ -11,7 +11,7 @@ int main (int argc, const char * argv[])
 		nil] autorelease];
 
 	[[RestHelper instance] Invoke: @"SelectTopic" value:value callback: ^(NSString * result) {
-		NSLog(result);
+		NSLog(@"%@", result);
 	}];
 	
 	[pool drain];
