@@ -40,15 +40,15 @@ static NSOperationQueue *restQueue = nil;
 	return [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
 }
 
-- (void) Invoke: (NSString *)methodName value:(NSDictionary *)value {
+- (void) Invoke: (NSString *)methodName value:(NSDictionary *)value callback:(void (^)(NSString *))callback {
 	#ifdef PSB_UI
-		[restQueue addOperationWithBlock: ^ {
+		[restQueue addOperationWithBlock : ^{
 			NSString *result = [RestHelper _Invoke: methodName value: value];
-			NSLog(result);
+			callback(result);
 		}];
 	#else
 		NSString *result = [RestHelper _Invoke: methodName value: value];
-		NSLog(result);
+		callback(result);
 	#endif
 }
 

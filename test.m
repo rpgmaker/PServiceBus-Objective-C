@@ -2,8 +2,6 @@
 #import "rest.h"
 
 
-//typedef void (^PSBAction)(NSString *result);
-	
 int main (int argc, const char * argv[])
 {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -12,7 +10,11 @@ int main (int argc, const char * argv[])
         @"ChatTopic", @"name",
 		nil] autorelease];
 
-	[[RestHelper instance] Invoke: @"SelectTopic" value:value];
+	[[RestHelper instance] Invoke: @"SelectTopic" value:value callback: ^(NSString * result) {
+		NSLog(result);
+	}];
+	
+	getch();
 	
 	[pool drain];
 		
