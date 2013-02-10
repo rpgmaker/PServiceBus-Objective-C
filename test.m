@@ -14,8 +14,6 @@ int main (int argc, const char * argv[])
 		NSLog(result);
 	}];
 	
-	getch();
-	
 	[pool drain];
 		
 	return 0;
