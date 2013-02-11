@@ -40,7 +40,7 @@ static NSOperationQueue *restQueue = nil;
 	return [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
 }
 
-- (void) Invoke: (NSString *)methodName value:(NSDictionary *)value callback:(OneStringBlock)callback {
+- (void) Invoke: (NSString *)methodName value:(NSDictionary *)value callback:(PSBOneStringBlock)callback {
 	#ifdef PSB_UI
 		PSBRestOperation *op = [[[PSBRestOperation alloc] initWithRequest:methodName value:value callback:callback] autorelease];
 		[restQueue addOperation : op];

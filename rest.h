@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "callbackop.h"
+#import "psb.h"
 
 #ifdef UI_USER_INTERFACE_IDIOM
 	#define PSB_UI

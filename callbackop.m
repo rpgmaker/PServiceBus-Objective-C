@@ -5,7 +5,7 @@
 
 @synthesize callback, methodName, value;
 
-- (PSBRestOperation *) initWithRequest:(NSString *)pmethodName value:(NSDictionary *)pvalue callback:(OneStringBlock)pcallback {
+- (PSBRestOperation *) initWithRequest:(NSString *)pmethodName value:(NSDictionary *)pvalue callback:(PSBOneStringBlock)pcallback {
 	
 	self = [super init];
 	

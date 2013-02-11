@@ -1,14 +1,14 @@
 #import <Foundation/Foundation.h>
 
-typedef void (^OneStringBlock)(NSString * result);
+typedef void (^PSBOneStringBlock)(NSString * result);
 
 @interface PSBRestOperation : NSOperation {}
  
-@property (nonatomic, copy) OneStringBlock callback;
+@property (nonatomic, copy) PSBOneStringBlock callback;
 @property (retain) NSString *methodName;
 @property (retain) NSDictionary *value;
 
 
-- (PSBRestOperation *) initWithRequest:(NSString *)pmethodName value:(NSDictionary *)pvalue callback:(OneStringBlock)pcallback;
+- (PSBRestOperation *) initWithRequest:(NSString *)pmethodName value:(NSDictionary *)pvalue callback:(PSBOneStringBlock)pcallback;
 
 @end
