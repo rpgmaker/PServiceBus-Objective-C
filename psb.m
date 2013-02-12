@@ -12,17 +12,5 @@ static NSString * apikey = nil;
 static NSString * passcode = nil;
 static NSString * address = nil; 
 
-+ (void) Register:(NSString *)name description:(NSString *)description {}
-
-+ (void) Register:(NSString *)name {}
-
-+ (NSString *) username { return username; } 
-
-+ (NSString *) apikey { return apikey;} 
-
-+ (NSString *) passcode { return passcode; } 
-
-+ (NSString *) address { return address; } 
-
 
 @end
