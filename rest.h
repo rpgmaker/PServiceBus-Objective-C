@@ -10,8 +10,8 @@
 	
 }
 
-+ (RestHelper *) instance;
-+ (NSString *) _Invoke:(NSString *)methodName value:(NSDictionary *)value;
-- (void) Invoke: (NSString *)methodName value:(NSDictionary *)value callback:(PSBOneStringBlock)callback;
++ (NSString *) invokeRequest:(NSString *)methodName value:(NSDictionary *)value;
++ (void) invoke:(NSString *)methodName value:(NSDictionary *)value callback:(PSBOneStringBlock)callback;
++ (void) invoke:(NSString *)methodName value:(NSDictionary *)value;
 
 @end

@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <objc/runtime.h>
 #import "psb.h"
 
 @interface TestObject : NSObject {}
@@ -16,10 +17,9 @@
 int main (int argc, const char * argv[])
 {
 	@autoreleasepool {
-	
-		NSDictionary *value = [[[NSDictionary alloc] initWithObjectsAndKeys: 
+		NSDictionary *value = [[NSDictionary alloc] initWithObjectsAndKeys: 
 			@"ChatTopic", @"name",
-			nil] autorelease];
+			nil];
 				
 		//id obj = [[TestObject alloc] init];
 		
@@ -27,7 +27,7 @@ int main (int argc, const char * argv[])
 		
 		//NSLog(@"%@", name);
 		
-		[[RestHelper instance] Invoke: @"SelectTopic" value:value callback: ^(NSString * result) {
+		[RestHelper invoke: @"SelectTopic" value:value callback: ^(NSString * result) {
 			NSLog(@"%@", result);
 		}];
 		

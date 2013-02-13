@@ -19,9 +19,11 @@
 }
 
 - (void) main {	
-	NSString *result = [RestHelper _Invoke: methodName value:value];
-	callback(result);
-	[callback release];
+	NSString *result = [RestHelper invokeRequest: methodName value:value];
+	if(callback) {
+		callback(result);
+		[callback release];
+	}
 	[value release];
 }
 

@@ -2,27 +2,24 @@
 
 @implementation RestHelper
 
-static RestHelper *restInstance = nil;
 static NSOperationQueue *restQueue = nil;
 
-+ (RestHelper *) instance {		
-	if(restInstance != nil) return restInstance;
-	if(restQueue == nil){
-		restQueue = [[NSOperationQueue alloc] init];
-		restQueue.name = @"PSB REST API";
-	}
-	restInstance = [[RestHelper alloc] init];
-	return restInstance;
++ (void) initialize {		
+	if(restQueue != nil) return;
+	restQueue = [[NSOperationQueue alloc] init];
+	restQueue.name = @"PSB REST API";
 }
 
-+ (NSString *) _Invoke:(NSString *)methodName value:(NSDictionary *)value {
++ (NSString *) invokeRequest:(NSString *)methodName value:(NSDictionary *)value {
 
 	NSMutableData *data = [[NSMutableData alloc] init];
 	NSURLResponse *response = nil;
 	NSError *error = nil;
 	NSError *jsonError = nil;
 	
-	NSString *urlStr = [NSString stringWithFormat:@"http://localhost:8087/esb/%@", methodName];
+	NSString *urlStr = [NSString stringWithFormat:@"%@%@?ReThrowException=%@&ESBUserName=%@&ESBPassword=%@&ConnectionID=%@",
+		[PSBClient endpoint], methodName, [PSBClient throwException] == YES ? @"true" : @"false",
+		[PSBClient apikey], [PSBClient passcode], [PSBClient username]];
     
 	NSURL *url = [NSURL URLWithString:urlStr];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url];
@@ -40,14 +37,19 @@ static NSOperationQueue *restQueue = nil;
 	return [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
 }
 
-- (void) Invoke: (NSString *)methodName value:(NSDictionary *)value callback:(PSBOneStringBlock)callback {
++ (void) invoke: (NSString *)methodName value:(NSDictionary *)value callback:(PSBOneStringBlock)callback {
 	#ifdef PSB_UI
 		PSBRestOperation *op = [[[PSBRestOperation alloc] initWithRequest:methodName value:value callback:callback] autorelease];
 		[restQueue addOperation : op];
 	#else
-		NSString *result = [RestHelper _Invoke: methodName value: value];
-		callback(result);
+		NSString *result = [RestHelper invokeRequest: methodName value: value];
+		if(callback) callback(result);
+		[value release];
 	#endif
+}
+
++ (void) invoke: (NSString *)methodName value:(NSDictionary *)value {
+	[RestHelper invoke: methodName value:value callback: ^(NSString * _) {}];
 }
 
 @end
