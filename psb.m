@@ -84,11 +84,39 @@ static NSString *endpoint;
 }
 
 + (NSDictionary *) getTransportData:(NSString *)topicName {
-	return nil;
+	switch(transport) {
+		case MSMQ:
+		case RabbitMQ:
+		case Redis:
+		{
+			return [[NSDictionary alloc] initWithObjectsAndKeys: 
+				0, @"Format",
+				[PSBClient parseAddress: topicName], @"Path",
+				nil];
+		}
+		case Tcp:
+		{
+			NSArray *tokens = [address componentsSeparatedByString: @":"];
+			BOOL useSSL = [tokens count] > 2 &&
+			[(NSString *)[tokens objectAtIndex: 2] caseInsensitiveCompare: @"true"] == NSOrderedSame ? YES : NO;
+			NSString *ipAddress = (NSString *)[tokens objectAtIndex: 0];
+			int port = [(NSString *)[tokens objectAtIndex: 1] intValue];
+			return [[NSDictionary alloc] initWithObjectsAndKeys: 
+				0, @"Format",
+				ipAddress, @"IPAddress",
+				port, @"Port",
+				useSSL, @"UseSSL",
+				nil];
+		}
+		default:
+		{
+			return nil;
+		}
+	}
 }
 
 + (void) unSubscribeFromTopic:(NSString *)topicName {
-
+	
 }
 
 + (void) cleanUp {
