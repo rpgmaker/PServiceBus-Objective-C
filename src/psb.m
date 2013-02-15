@@ -123,7 +123,6 @@ static NSString *endpoint;
 	if(durable != YES){
 		NSUserDefaults  *settings = [NSUserDefaults standardUserDefaults];
 		[settings removeObjectForKey: USERNAME_KEY];
-		[settings release];
 	}
 	NSEnumerator *enumerator = [handlers objectEnumerator];
 	id handler;
@@ -168,7 +167,6 @@ static NSString *endpoint;
 	if(durable == YES)
 		[settings setObject: username forKey: USERNAME_KEY];
 
-	[settings release];
 	return username;
 }
 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="PServiceBus-Objective-C" />
+		<Option pch_mode="2" />
+		<Option compiler="gnu_gcc_objc_compiler" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/PServiceBus-Objective-C" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/" />
+				<Option type="1" />
+				<Option compiler="gnu_gcc_objc_compiler" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<ExtraCommands>
+					<Add after="compile.cmd" />
+					<Mode after="always" />
+				</ExtraCommands>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/PServiceBus-Objective-C" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/" />
+				<Option type="1" />
+				<Option compiler="gnu_gcc_objc_compiler" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="src/callbackop.h" />
+		<Unit filename="src/callbackop.m">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/psb.h" />
+		<Unit filename="src/psb.m" />
+		<Unit filename="src/rest.h" />
+		<Unit filename="src/rest.m" />
+		<Unit filename="src/test.m" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
