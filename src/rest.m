@@ -4,7 +4,7 @@
 
 static NSOperationQueue *restQueue = nil;
 
-+ (void) initialize {		
++ (void) initialize {
 	if(restQueue != nil) return;
 	restQueue = [[NSOperationQueue alloc] init];
 	restQueue.name = @"PSB REST API";
@@ -16,24 +16,24 @@ static NSOperationQueue *restQueue = nil;
 	NSURLResponse *response = nil;
 	NSError *error = nil;
 	NSError *jsonError = nil;
-	
+
 	NSString *urlStr = [NSString stringWithFormat:@"%@%@?ReThrowException=%@&ESBUserName=%@&ESBPassword=%@&ConnectionID=%@",
 		[PSBClient endpoint], methodName, [PSBClient throwException] == YES ? @"true" : @"false",
 		[PSBClient apikey], [PSBClient passcode], [PSBClient username]];
-    
+
 	NSURL *url = [NSURL URLWithString:urlStr];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url];
-	
+
     NSData *buffer = [NSJSONSerialization dataWithJSONObject: value options:0 error:&jsonError];
-	
+
 	[request setHTTPMethod:@"POST"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     [request setHTTPBody: buffer];
 
 	[data appendData:[NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error]];
-    
-	if(error) @throw error; 
-	
+
+	if(error) @throw error;
+
 	return [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
 }
 
@@ -42,7 +42,7 @@ static NSOperationQueue *restQueue = nil;
 		PSBRestOperation *op = [[[PSBRestOperation alloc] initWithRequest:methodName value:value callback:callback] autorelease];
 		[restQueue addOperation : op];
 	#else
-		NSString *result = [RestHelper invokeRequest: methodName value: value];
+		NSString *result = [self invokeRequest: methodName value: value];
 		if(callback) callback(result);
 		[value release];
 	#endif

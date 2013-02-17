@@ -16,6 +16,7 @@
 				</Compiler>
 				<ExtraCommands>
 					<Add after="compile.cmd" />
+					<Add after="run.cmd" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
@@ -39,6 +40,8 @@
 		<Unit filename="src/callbackop.m">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/objectparser.h" />
+		<Unit filename="src/objectparser.m" />
 		<Unit filename="src/psb.h" />
 		<Unit filename="src/psb.m" />
 		<Unit filename="src/rest.h" />
@@ -49,6 +52,15 @@
 			<envvars />
 			<debugger />
 			<lib_finder disable_auto="1" />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

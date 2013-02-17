@@ -16,7 +16,7 @@ static NSString *apikey = nil;
 static BOOL durable = NO;
 static BOOL throwException = NO;
 static NSString *passcode = nil;
-static NSString *address = nil; 
+static NSString *address = nil;
 static NSMutableDictionary *handlers = nil;
 static NSMutableDictionary *topics = nil;
 static TransportType transport;
@@ -38,15 +38,15 @@ static NSString *endpoint;
 + (void) disconnect {
 	NSString *username = [PSBClient username];
 	void (^action)(NSString *) = ^(NSString *name) {
-		[RestHelper invoke: @"Disconnect" value: 
-			[[NSDictionary alloc] initWithObjectsAndKeys: 
+		[RestHelper invoke: @"Disconnect" value:
+			[[NSDictionary alloc] initWithObjectsAndKeys:
 				name, @"name",
 			nil]];
 	};
 	[PSBClient cleanUp];
 	if(durable != YES){
-		[RestHelper invoke: @"DeleteSubscriber" value: 
-			[[NSDictionary alloc] initWithObjectsAndKeys: 
+		[RestHelper invoke: @"DeleteSubscriber" value:
+			[[NSDictionary alloc] initWithObjectsAndKeys:
 				username, @"name",
 			nil] callback: ^(NSString * _) {
 				action(username);
@@ -61,8 +61,8 @@ static NSString *endpoint;
 	if([topics objectForKey: name] != nil) return;
 	if(contract == nil) contract = [[NSDictionary alloc] init];
 	if(description == nil) description = [[NSString alloc] initWithString: name];
-	[RestHelper invoke: @"Disconnect" value: 
-		[[NSDictionary alloc] initWithObjectsAndKeys: 
+	[RestHelper invoke: @"Disconnect" value:
+		[[NSDictionary alloc] initWithObjectsAndKeys:
 			contract, @"Contract",
 			name, @"Name",
 			description, @"Description",
@@ -72,11 +72,11 @@ static NSString *endpoint;
 
 + (void) unRegisterTopic:(NSString *)name {
 	if(name == nil) [NSException raise: @"name" format: @"name cannot be nil"];
-	[RestHelper invoke: @"Disconnect" value: 
-		[[NSDictionary alloc] initWithObjectsAndKeys: 
+	[RestHelper invoke: @"Disconnect" value:
+		[[NSDictionary alloc] initWithObjectsAndKeys:
 			name, @"name",
 		nil]];
-	[topics removeObjectForKey: name];	
+	[topics removeObjectForKey: name];
 }
 
 + (NSString *) parseAddress:(NSString *)topicName {
@@ -89,7 +89,7 @@ static NSString *endpoint;
 		case RabbitMQ:
 		case Redis:
 		{
-			return [[NSDictionary alloc] initWithObjectsAndKeys: 
+			return [[NSDictionary alloc] initWithObjectsAndKeys:
 				0, @"Format",
 				[PSBClient parseAddress: topicName], @"Path",
 				nil];
@@ -101,7 +101,7 @@ static NSString *endpoint;
 			[(NSString *)[tokens objectAtIndex: 2] caseInsensitiveCompare: @"true"] == NSOrderedSame ? YES : NO;
 			NSString *ipAddress = (NSString *)[tokens objectAtIndex: 0];
 			int port = [(NSString *)[tokens objectAtIndex: 1] intValue];
-			return [[NSDictionary alloc] initWithObjectsAndKeys: 
+			return [[NSDictionary alloc] initWithObjectsAndKeys:
 				0, @"Format",
 				ipAddress, @"IPAddress",
 				port, @"Port",
@@ -116,7 +116,7 @@ static NSString *endpoint;
 }
 
 + (void) unSubscribeFromTopic:(NSString *)topicName {
-	
+
 }
 
 + (void) cleanUp {
@@ -159,10 +159,11 @@ static NSString *endpoint;
 	username = [settings stringForKey: USERNAME_KEY];
 	if(username) durable = YES;
 	if(username == nil) {
-		CFUUIDRef uuid = CFUUIDCreate(NULL);
-		CFStringRef str = CFUUIDCreateString(NULL, uuid);
-		CFRelease(uuid);
-		username = [NSString stringWithFormat: @"iOS%@", [(NSString *)str autorelease]];
+		//CFUUIDRef uuid = CFUUIDCreate(NULL);
+		//CFStringRef str = CFUUIDCreateString(NULL, uuid);
+		//CFRelease(uuid);
+		NSString *uid = @"iOS";//[(NSString *)str autorelease];
+		username = [NSString stringWithFormat: @"iOS%@", uid];
 	}
 	if(durable == YES)
 		[settings setObject: username forKey: USERNAME_KEY];
