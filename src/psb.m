@@ -2,6 +2,7 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import "rest.h"
 #import "psb.h"
+#import "objectparser.h"
 
 
 NSString * const USERNAME_KEY = @"pservicebus_username_info";
@@ -203,7 +204,7 @@ static NSString *endpoint;
 
     [self registerTopic: topicName];
 
-    [RestHelper invoke: @"Disconnect" value:
+    [RestHelper invoke: @"Update" value:
 		[[NSDictionary alloc] initWithObjectsAndKeys:
 			[self username], @"Subscriber",
 			topicName, @"Topic",
@@ -219,8 +220,8 @@ static NSString *endpoint;
 
 + (void) subscribe:(Class)clazz callback:(PSBMessageBlock)callback filter:(NSString *)filter interval:(long)interval batchSize:(int)batchSize caseSensitive:(BOOL)caseSensitive {
     if(!callback) [NSException raise: @"callback" format: @"callback cannot be nil"];
-    if(filter == nil) filter = @"";
-    if(interval <= 0) interval = 5;
+    filter = filter == nil ? @"" : filter;
+    interval = interval <= 0 ? 5 : interval;
 
     NSString *topicName = NSStringFromClass(clazz);
     NSNumber *needHeader = [NSNumber numberWithBool: NO];
@@ -275,19 +276,57 @@ static NSString *endpoint;
 }
 
 + (void) publish:(id)message groupID:(NSString *)groupID sequenceID:(long)sequenceID expiresIn:(long)expiresIn headers:(NSDictionary *)headers {
+    Class clazz = [message class];
+    NSString *topicName = NSStringFromClass(clazz);
+    expiresIn = expiresIn <= 0 ? 1000 * 60 * 30 : expiresIn;
+    NSMutableDictionary *headerDict = [NSMutableDictionary dictionary];
+    if(headers) [headerDict addEntriesFromDictionary: headers];
 
+    if(groupID && sequenceID > 0){
+        [headerDict setValue: groupID forKey: @"ESB_GROUP_ID"];
+        [headerDict setValue: [NSString stringWithFormat: @"%d", sequenceID] forKey: @"ESB_SEQUENCE_ID"];
+    }
+
+    if(clazz != [NSArray class]) {
+        message = [[NSArray alloc] initWithObjects:
+            [PSBJSONParser objectToDictionary: message]];
+    }else {
+        NSArray *arry = (NSArray *)message;
+        id item = [arry objectAtIndex: 0];
+        clazz = [item class];
+        topicName = NSStringFromClass(clazz);
+
+        NSMutableArray *items = [NSMutableArray arrayWithCapacity: [arry count]];
+        NSEnumerator *enumerator = [arry objectEnumerator];
+
+        while(item = [enumerator nextObject]){
+            [items addObject: [PSBJSONParser objectToDictionary: item]];
+        }
+
+        message = items;
+    }
+
+    [self registerTopic: topicName];
+
+    [RestHelper invoke: @"PublishTopic" value:
+		[[NSDictionary alloc] initWithObjectsAndKeys:
+			[NSString stringWithFormat: @"%d", expiresIn], @"ExpiresIn",
+			topicName, @"Topic",
+			[NSDictionary dictionaryWithDictionary: headerDict], @"Headers",
+			message, @"Messages",
+		nil]];
 }
 
 + (void) publish:(id)message groupID:(NSString *)groupID sequenceID:(long)sequenceID expiresIn:(long)expiresIn {
-
+    [self publish: message groupID:groupID sequenceID:sequenceID expiresIn:expiresIn headers:nil];
 }
 
 + (void) publish:(id)message groupID:(NSString *)groupID sequenceID:(long)sequenceID {
-
+    [self publish: message groupID:groupID sequenceID:sequenceID expiresIn: 0];
 }
 
 + (void) publish:(id)message {
-
+    [self publish: message groupID:nil sequenceID:0];
 }
 
 
