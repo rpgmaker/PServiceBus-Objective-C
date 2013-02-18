@@ -32,16 +32,16 @@ typedef enum {
 + (void) address:(NSString *)value;
 + (void) transport:(TransportType)value;
 + (void) endpoint:(NSString *)value;
-+ (void) durable:(BOOL)value;
-+ (void) throwException:(BOOL)value;
++ (void) durable:(bool)value;
++ (void) throwException:(bool)value;
 + (NSString *) endpoint;
 + (NSString *) username;
-+ (BOOL) throwException;
++ (bool) throwException;
 + (NSString *) apikey;
 + (NSString *) passcode;
 
-+ (void) ping:(void (^)(BOOL success))callback;
-+ (void) update:(Class)clazz filter:(NSString *)filter caseSensitive:(BOOL)caseSensitive;
++ (void) ping:(void (^)(bool success))callback;
++ (void) update:(Class)clazz filter:(NSString *)filter caseSensitive:(bool)caseSensitive;
 + (void) update:(Class)clazz filter:(NSString *)filter;
 
 + (void) subscribe:(Class)clazz callback:(PSBMessageBlock)callback filter:(NSString *)filter interval:(long)interval batchSize:(int)batchSize caseSensitive:(BOOL)caseSensitive;

@@ -1,4 +1,6 @@
+#import "objectparser.h"
 #import "rest.h"
+
 
 @implementation RestHelper
 
@@ -18,13 +20,13 @@ static NSOperationQueue *restQueue = nil;
 	NSError *jsonError = nil;
 
 	NSString *urlStr = [NSString stringWithFormat:@"%@%@?ReThrowException=%@&ESBUserName=%@&ESBPassword=%@&ConnectionID=%@",
-		[PSBClient endpoint], methodName, [PSBClient throwException] == YES ? @"true" : @"false",
+		[PSBClient endpoint], methodName, [PSBClient throwException] ? @"true" : @"false",
 		[PSBClient apikey], [PSBClient passcode], [PSBClient username]];
 
 	NSURL *url = [NSURL URLWithString:urlStr];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url];
 
-    NSData *buffer = [NSJSONSerialization dataWithJSONObject: value options:0 error:&jsonError];
+    NSData *buffer = [PSBJSONParser toJSONData: value];
 
 	[request setHTTPMethod:@"POST"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];

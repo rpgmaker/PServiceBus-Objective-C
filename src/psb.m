@@ -13,8 +13,8 @@ NSString * const STREAM_URL = @"Stream/?Subscriber=%@&TransportName=%@&BatchSize
 
 static NSString *username = nil;
 static NSString *apikey = nil;
-static BOOL durable = NO;
-static BOOL throwException = NO;
+static bool durable = false;
+static bool throwException = false;
 static NSString *passcode = nil;
 static NSString *address = nil;
 static NSMutableDictionary *handlers = nil;
@@ -44,7 +44,7 @@ static NSString *endpoint;
 			nil]];
 	};
 	[PSBClient cleanUp];
-	if(durable != YES){
+	if(!durable){
 		[RestHelper invoke: @"DeleteSubscriber" value:
 			[[NSDictionary alloc] initWithObjectsAndKeys:
 				username, @"name",
@@ -120,7 +120,7 @@ static NSString *endpoint;
 }
 
 + (void) cleanUp {
-	if(durable != YES){
+	if(!durable){
 		NSUserDefaults  *settings = [NSUserDefaults standardUserDefaults];
 		[settings removeObjectForKey: USERNAME_KEY];
 	}
@@ -145,9 +145,9 @@ static NSString *endpoint;
 
 + (void) endpoint:(NSString *)value { endpoint = value; }
 
-+ (void) durable:(BOOL)value { durable = value; }
++ (void) durable:(bool)value { durable = value; }
 
-+ (void) throwException:(BOOL)value { throwException = value; }
++ (void) throwException:(bool)value { throwException = value; }
 
 + (NSString *) endpoint {
 	return [NSString stringWithFormat:@"%@%@", endpoint, [endpoint hasSuffix: @"/"] ? @"" : @"/"];
@@ -157,30 +157,27 @@ static NSString *endpoint;
 	if(username) return username;
 	NSUserDefaults  *settings = [NSUserDefaults standardUserDefaults];
 	username = [settings stringForKey: USERNAME_KEY];
-	if(username) durable = YES;
+	if(username) durable = false;
 	if(username == nil) {
-		//CFUUIDRef uuid = CFUUIDCreate(NULL);
-		//CFStringRef str = CFUUIDCreateString(NULL, uuid);
-		//CFRelease(uuid);
-		NSString *uid = @"iOS";//[(NSString *)str autorelease];
-		username = [NSString stringWithFormat: @"iOS%@", uid];
+		NSString *uuid = [[NSProcessInfo processInfo] globallyUniqueString];
+		username = [NSString stringWithFormat: @"iOS%@", uuid];
 	}
-	if(durable == YES)
+	if(durable)
 		[settings setObject: username forKey: USERNAME_KEY];
 
 	return username;
 }
 
-+ (BOOL) throwException { return throwException; }
++ (bool) throwException { return throwException; }
 
 + (NSString *) apikey { return apikey; }
 + (NSString *) passcode { return passcode; }
 
-+ (void) ping:(void (^)(BOOL success))callback {
++ (void) ping:(void (^)(bool success))callback {
 
 }
 
-+ (void) update:(Class)clazz filter:(NSString *)filter caseSensitive:(BOOL)caseSensitive {
++ (void) update:(Class)clazz filter:(NSString *)filter caseSensitive:(bool)caseSensitive {
 
 }
 
