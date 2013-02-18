@@ -32,6 +32,27 @@
 
 
 + (NSDictionary *) objectToDictionary:(id)obj {
+
+    if([obj isKindOfClass: [NSDictionary class]]){
+        NSMutableDictionary *mDict = [NSMutableDictionary dictionary];
+        NSDictionary *nDict = (NSDictionary *)obj;
+        NSEnumerator *enumerator = [nDict keyEnumerator];
+        id itemKey;
+
+        while((itemKey = [enumerator nextObject])){
+            id item = [nDict objectForKey: itemKey];
+            Class itemClass = [item class];
+            bool isPrimitive = itemClass == [NSString class] ||
+                itemClass == [NSNumber class];
+            if(isPrimitive) [mDict setObject:item forKey:itemKey];
+            else {
+                [mDict setObject:[self objectToDictionary: item] forKey:itemKey];
+            }
+        }
+
+        return [NSDictionary dictionaryWithDictionary:mDict];
+    }
+
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
 
     unsigned count;
@@ -51,6 +72,10 @@
 
         if (!propInfo.primitive)
             value = [self objectToDictionary: value];
+        else {
+            if([value isKindOfClass: [NSDictionary class]])
+                value = [self objectToDictionary: (NSDictionary *)value];
+        }
 
         [dict setObject:value forKey:key];
     }
