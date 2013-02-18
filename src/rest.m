@@ -20,7 +20,7 @@ static NSOperationQueue *restQueue = nil;
 	NSError *jsonError = nil;
 
 	NSString *urlStr = [NSString stringWithFormat:@"%@%@?ReThrowException=%@&ESBUserName=%@&ESBPassword=%@&ConnectionID=%@",
-		[PSBClient endpoint], methodName, [PSBClient throwException] ? @"true" : @"false",
+		[PSBClient endpoint], methodName, [NSNumber numberWithBool: ([PSBClient throwException] ? YES : NO)],
 		[PSBClient apikey], [PSBClient passcode], [PSBClient username]];
 
 	NSURL *url = [NSURL URLWithString:urlStr];

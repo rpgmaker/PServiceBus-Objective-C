@@ -41,7 +41,7 @@ typedef enum {
 + (NSString *) passcode;
 
 + (void) ping:(void (^)(bool success))callback;
-+ (void) update:(Class)clazz filter:(NSString *)filter caseSensitive:(bool)caseSensitive;
++ (void) update:(Class)clazz filter:(NSString *)filter caseSensitive:(BOOL)caseSensitive;
 + (void) update:(Class)clazz filter:(NSString *)filter;
 
 + (void) subscribe:(Class)clazz callback:(PSBMessageBlock)callback filter:(NSString *)filter interval:(long)interval batchSize:(int)batchSize caseSensitive:(BOOL)caseSensitive;

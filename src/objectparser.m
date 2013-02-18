@@ -62,6 +62,8 @@
 
         objc_property_t prop = properties[i];
 
+        if(prop == NULL) continue;
+
         PSBPropertyInfo *propInfo = [[PSBPropertyInfo alloc] initWith: prop];
 
         NSString *key = propInfo.name;
@@ -94,6 +96,8 @@
     for (int i = 0; i < count; i++) {
 
         objc_property_t prop = properties[i];
+
+        if(prop == NULL) continue;
 
         PSBPropertyInfo *propInfo = [[PSBPropertyInfo alloc] initWith: prop];
 

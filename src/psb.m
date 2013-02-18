@@ -98,14 +98,14 @@ static NSString *endpoint;
 		{
 			NSArray *tokens = [address componentsSeparatedByString: @":"];
 			BOOL useSSL = [tokens count] > 2 &&
-			[(NSString *)[tokens objectAtIndex: 2] caseInsensitiveCompare: @"true"] == NSOrderedSame ? YES : NO;
+			[(NSString *)[tokens objectAtIndex: 2] caseInsensitiveCompare: @"true"] == NSOrderedSame;
 			NSString *ipAddress = (NSString *)[tokens objectAtIndex: 0];
 			int port = [(NSString *)[tokens objectAtIndex: 1] intValue];
 			return [[NSDictionary alloc] initWithObjectsAndKeys:
 				0, @"Format",
 				ipAddress, @"IPAddress",
 				port, @"Port",
-				useSSL, @"UseSSL",
+				[NSNumber numberWithBool: useSSL], @"UseSSL",
 				nil];
 		}
 		default:
@@ -116,7 +116,21 @@ static NSString *endpoint;
 }
 
 + (void) unSubscribeFromTopic:(NSString *)topicName {
-
+    if(topicName == nil) [NSException raise: @"topicName" format: @"topicName cannot be nil"];
+    id handler;
+    [RestHelper invoke: @"Disconnect" value:
+		[[NSDictionary alloc] initWithObjectsAndKeys:
+			[self username], @"Subscriber",
+			topicName, @"Topic",
+			[[NSDictionary alloc] initWithObjectsAndKeys:
+                topicName, @"Name",
+                nil], @"Transport",
+		nil]];
+    if((handler = [handlers objectForKey: topicName]) != nil){
+        [handlers removeObjectForKey: topicName];
+        if([handler respondsToSelector: @selector(stop)])
+            [handler stop];
+    }
 }
 
 + (void) cleanUp {
@@ -127,7 +141,8 @@ static NSString *endpoint;
 	NSEnumerator *enumerator = [handlers objectEnumerator];
 	id handler;
 	while((handler = [enumerator nextObject])){
-		//TODO: call stop for handler
+		if([handler respondsToSelector: @selector(stop)])
+            [handler stop];
 	}
 	if(onDisconnect) onDisconnect();
 	[handlers release];
@@ -173,44 +188,90 @@ static NSString *endpoint;
 + (NSString *) apikey { return apikey; }
 + (NSString *) passcode { return passcode; }
 
-+ (void) ping:(void (^)(bool success))callback {
-
++ (void) ping:(void (^)(bool))callback {
+    if(!callback) [NSException raise: @"callback" format: @"callback cannot be nil"];
+    [RestHelper invoke: @"Ping" value: [[NSDictionary alloc] init]
+    callback: ^(NSString *result){
+        bool success = [result caseInsensitiveCompare: @"true"] == NSOrderedSame;
+        callback(success);
+    }];
 }
 
-+ (void) update:(Class)clazz filter:(NSString *)filter caseSensitive:(bool)caseSensitive {
++ (void) update:(Class)clazz filter:(NSString *)filter caseSensitive:(BOOL)caseSensitive {
+    NSString *topicName = NSStringFromClass(clazz);
+    NSNumber *needHeader = [NSNumber numberWithBool: NO];
 
+    [self registerTopic: topicName];
+
+    [RestHelper invoke: @"Disconnect" value:
+		[[NSDictionary alloc] initWithObjectsAndKeys:
+			[self username], @"Subscriber",
+			topicName, @"Topic",
+			filter, @"Filter",
+			[NSNumber numberWithBool: caseSensitive], @"CaseSensitive",
+			needHeader, @"NeedHeader",
+		nil]];
 }
 
 + (void) update:(Class)clazz filter:(NSString *)filter {
-
+    [self update: clazz filter:filter caseSensitive: YES];
 }
 
 + (void) subscribe:(Class)clazz callback:(PSBMessageBlock)callback filter:(NSString *)filter interval:(long)interval batchSize:(int)batchSize caseSensitive:(BOOL)caseSensitive {
+    if(!callback) [NSException raise: @"callback" format: @"callback cannot be nil"];
+    if(filter == nil) filter = @"";
+    if(interval <= 0) interval = 5;
 
+    NSString *topicName = NSStringFromClass(clazz);
+    NSNumber *needHeader = [NSNumber numberWithBool: NO];
+
+    [self registerTopic: topicName];
+
+    [RestHelper invoke: @"Subscribe" value:
+		[[NSDictionary alloc] initWithObjectsAndKeys:
+			[self username], @"Subscriber",
+			topicName, @"Topic",
+			filter, @"Filter",
+			[NSNumber numberWithBool: caseSensitive], @"CaseSensitive",
+			needHeader, @"NeedHeader",
+			[[NSDictionary alloc] initWithObjectsAndKeys:
+                topicName, @"Name",
+                [self getTransportData: topicName], @"Parameters",
+                [NSNumber numberWithInt: (int)transport], @"TypeID",
+                nil], @"Transport",
+            nil]
+            callback: ^(NSString *result){
+                NSString *url = [NSString stringWithFormat: @"%@%@", endpoint,
+                    [NSString stringWithFormat: @"%@%@%@%d%d%@", STREAM_URL, [self username],
+                        topicName, batchSize, interval, [self username]]
+                ];
+                [url release];
+            }];
 }
 
 + (void) subscribe:(Class)clazz callback:(PSBMessageBlock)callback filter:(NSString *)filter interval:(long)interval batchSize:(int)batchSize {
-
+    [self subscribe: clazz callback:callback filter:filter interval:interval batchSize:batchSize caseSensitive: YES];
 }
 
 + (void) subscribe:(Class)clazz callback:(PSBMessageBlock)callback filter:(NSString *)filter interval:(long)interval {
-
+    [self subscribe: clazz callback:callback filter:filter interval:interval batchSize:1];
 }
 
 + (void) subscribe:(Class)clazz callback:(PSBMessageBlock)callback filter:(NSString *)filter {
-
+    [self subscribe: clazz callback:callback filter:filter interval:5];
 }
 
 + (void) subscribe:(Class)clazz callback:(PSBMessageBlock)callback {
-
+    [self subscribe: clazz callback:callback filter:@""];
 }
 
 + (void) unSubscribe:(NSString *)topicName {
-
+    [self unSubscribeFromTopic: topicName];
 }
 
 + (void) unSubscribeWith:(Class)clazz {
-
+    NSString *topicName = NSStringFromClass(clazz);
+    [self unSubscribeFromTopic: topicName];
 }
 
 + (void) publish:(id)message groupID:(NSString *)groupID sequenceID:(long)sequenceID expiresIn:(long)expiresIn headers:(NSDictionary *)headers {
@@ -231,24 +292,24 @@ static NSString *endpoint;
 
 
 + (void) unRegister:(NSString *)name {
-	[PSBClient unRegisterTopic: name];
+	[self unRegisterTopic: name];
 }
 
 + (void) unRegisterWith:(Class)clazz {
-	[PSBClient unRegisterTopic: NSStringFromClass(clazz)];
+	[self unRegisterTopic: NSStringFromClass(clazz)];
 }
 
 + (void) registerTopicWith:(Class)clazz {
 	NSString *topicName = NSStringFromClass(clazz);
-	[PSBClient _registerTopic: topicName description:topicName contract:nil];
+	[self _registerTopic: topicName description:topicName contract:nil];
 }
 
 + (void) registerTopic:(NSString *)name description:(NSString *)description {
-	[PSBClient _registerTopic: name description:description contract:nil];
+	[self _registerTopic: name description:description contract:nil];
 }
 
 + (void) registerTopic:(NSString *)name {
-	[PSBClient _registerTopic: name description:nil contract:nil];
+	[self _registerTopic: name description:nil contract:nil];
 }
 
 
