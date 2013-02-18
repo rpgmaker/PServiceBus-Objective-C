@@ -22,9 +22,9 @@
 }
 
 + (NSData *) toJSONData:(id)obj {
-    BOOL isRegularClass = [obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]] ? NO : YES;
+    bool isCollection = [obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]];
     NSError *error = nil;
-    if(isRegularClass == YES)
+    if(!isCollection)
         obj = [self objectToDictionary: obj];
     return [NSJSONSerialization dataWithJSONObject: obj options:0 error:&error];
 }
