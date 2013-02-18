@@ -1,4 +1,7 @@
+#import <objc/runtime.h>
+#import "psbproperty.h"
 #import "objectparser.h"
+
 
 @implementation PSBJSONParser
 
@@ -26,6 +29,8 @@
     return [NSJSONSerialization dataWithJSONObject: obj options:0 error:&error];
 }
 
+
+
 + (NSDictionary *) objectToDictionary:(id)obj {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
 
@@ -33,36 +38,21 @@
     objc_property_t *properties = class_copyPropertyList([obj class], &count);
 
     for (int i = 0; i < count; i++) {
+
         objc_property_t prop = properties[i];
 
-        NSString *key = [NSString stringWithUTF8String:property_getName(prop)];
-        NSArray *keyTokens = [key componentsSeparatedByString: [NSString stringWithFormat: @"set%@", [[key substringToIndex: 1] uppercaseString]]];
-        key = (NSString *)[keyTokens objectAtIndex: 0];
+        PSBPropertyInfo *propInfo = [[PSBPropertyInfo alloc] initWith: prop];
 
-        const char *attribute = property_getAttributes(prop);
+        NSString *key = propInfo.name;
 
-        NSString *propClassStr = [NSString stringWithCString:attribute encoding:NSASCIIStringEncoding];
-        NSArray *tokens = [propClassStr componentsSeparatedByString: @"\""];
+        id value = [obj valueForKey:key];
 
-        NSString *className = (NSString *)[tokens objectAtIndex: 1];
+        if(value == nil) continue;
 
-        Class propClass = NSClassFromString(className);
+        if (!propInfo.primitive)
+            value = [self objectToDictionary: value];
 
-        BOOL isPrimitive =
-            propClass == [NSString class] ||
-            propClass == [NSNumber class] ||
-            propClass == [NSDictionary class] ||
-            propClass == [NSArray class] ? YES : NO;
-
-        if (isPrimitive == NO) {
-            id subObj = [self objectToDictionary:[obj valueForKey:key]];
-            [dict setObject:subObj forKey:key];
-        }
-        else
-        {
-            id value = [obj valueForKey:key];
-            if(value) [dict setObject:value forKey:key];
-        }
+        [dict setObject:value forKey:key];
     }
 
     free(properties);
@@ -77,35 +67,23 @@
     objc_property_t *properties = class_copyPropertyList([obj class], &count);
 
     for (int i = 0; i < count; i++) {
+
         objc_property_t prop = properties[i];
 
-        NSString *key = [NSString stringWithUTF8String:property_getName(prop)];
-        NSArray *keyTokens = [key componentsSeparatedByString: [NSString stringWithFormat: @"set%@", [[key substringToIndex: 1] uppercaseString]]];
-        key = (NSString *)[keyTokens objectAtIndex: 0];
+        PSBPropertyInfo *propInfo = [[PSBPropertyInfo alloc] initWith: prop];
 
-        const char *attribute = property_getAttributes(prop);
+        NSString *key = propInfo.name;
 
-        NSString *propClassStr = [NSString stringWithCString:attribute encoding:NSASCIIStringEncoding];
-        NSArray *tokens = [propClassStr componentsSeparatedByString: @"\""];
+        id value = [dict valueForKey: key];
 
-        NSString *className = (NSString *)[tokens objectAtIndex: 1];
+        if(value == nil) continue;
 
-        Class propClass = NSClassFromString(className);
-
-        BOOL isPrimitive =
-            propClass == [NSString class] ||
-            propClass == [NSNumber class] ||
-            propClass == [NSDictionary class] ||
-            propClass == [NSArray class] ? YES : NO;
-
-        if(isPrimitive == NO){
-            NSDictionary *nDict = (NSDictionary *)[dict valueForKey: key];
-            id nObj = [self dictionaryToObject:nDict clazz: propClass];
-            [obj setValue:nObj forKey: key];
-        }else{
-            id value = [dict valueForKey: key];
-            [obj setValue:value forKey:key];
+        if(!propInfo.primitive){
+            NSDictionary *nDict = (NSDictionary *)value;
+            value = [self dictionaryToObject:nDict clazz: propInfo.clazz];
         }
+
+        [obj setValue:value forKey:key];
     }
     return obj;
 }
