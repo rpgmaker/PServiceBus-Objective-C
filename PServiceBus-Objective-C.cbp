@@ -40,10 +40,14 @@
 		<Unit filename="src/callbackop.m">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/httpstreaming.h" />
+		<Unit filename="src/httpstreaming.m" />
 		<Unit filename="src/objectparser.h" />
 		<Unit filename="src/objectparser.m" />
 		<Unit filename="src/psb.h" />
 		<Unit filename="src/psb.m" />
+		<Unit filename="src/psbproperty.h" />
+		<Unit filename="src/psbproperty.m" />
 		<Unit filename="src/rest.h" />
 		<Unit filename="src/rest.m" />
 		<Unit filename="src/test.m" />
