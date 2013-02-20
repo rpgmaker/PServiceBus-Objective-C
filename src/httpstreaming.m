@@ -23,11 +23,27 @@ int const MAX_BUFFER_SIZE = 8;
 @synthesize callback, running, lastBuffer, bigBuffer,
     client, response, buffer, url = url;
 
+static NSRegularExpression *cometRegex = nil;
+static NSOperationQueue *httpQueue = nil;
+static NSData *delimeter = nil;
+
++ (void) initialize {
+    NSError *error = nil;
+    cometRegex = [NSRegularExpression regularExpressionWithPattern: @"(<comet)?>(?<Data>.+?)</comet>"
+        options:NSRegularExpressionCaseInsensitive error: &error];
+
+    httpQueue = [[NSOperationQueue alloc] init];
+	httpQueue.name = @"HTTP Streaming";
+
+	delimeter = [@"</comet>" dataUsingEncoding: NSUTF8StringEncoding];
+}
 
 - (PSBHttpStreaming *) initWithUrl:(NSString *)value {
     self = [super init];
     if(self){
         self.url = value;
+        self.bigBuffer = [NSMutableData dataWithLength: MAX_BUFFER_SIZE * 2];
+        self.buffer = [[NSMutableData alloc] init];
     }
     return self;
 }
@@ -45,6 +61,8 @@ int const MAX_BUFFER_SIZE = 8;
 - (void) start {
     if(self.running) [NSException raise: @"running" format: @"Streaming is already in progress"];
     self.running = true;
+    client = [NSURLRequest requestWithURL:[NSURL URLWithString: self.url]];
+    [[[NSURLConnection alloc] initWithRequest:client delegate:self] autorelease];
 }
 
 - (void) stop {
@@ -65,6 +83,26 @@ int const MAX_BUFFER_SIZE = 8;
 
 - (void) onReceived:(PSBOneStringBlock)value {
     self.callback = value;
+}
+
+- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
+{
+
+}
+
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
+{
+
+}
+
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
+{
+
+}
+
+- (void)connectionDidFinishLoading:(NSURLConnection *)connection
+{
+
 }
 
 
