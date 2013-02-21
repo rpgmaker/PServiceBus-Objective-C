@@ -10,7 +10,8 @@ extern int const MAX_BUFFER_SIZE;
 @property (readonly) NSMutableData *lastBuffer;
 @property (readonly) NSMutableData *bigBuffer;
 
-@property (readonly) NSMutableURLRequest *client;
+@property (readonly) NSURLConnection *client;
+@property (readonly) NSMutableURLRequest *request;
 @property (readonly) NSURLResponse *response;
 
 @property (readonly) NSMutableData *buffer;
@@ -22,8 +23,6 @@ extern int const MAX_BUFFER_SIZE;
 - (void) start;
 
 - (void) stop;
-
-- (void) readBuffer:(NSURLResponse *)response;
 
 - (bool) hasData:(NSData *)buffer;
 

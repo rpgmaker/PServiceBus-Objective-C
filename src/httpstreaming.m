@@ -9,7 +9,8 @@ int const MAX_BUFFER_SIZE = 8;
 @property (readwrite) NSMutableData *lastBuffer;
 @property (readwrite) NSMutableData *bigBuffer;
 
-@property (readwrite) NSMutableURLRequest *client;
+@property (readwrite) NSURLConnection *client;
+@property (readwrite) NSMutableURLRequest *request;
 @property (readwrite) NSURLResponse *response;
 
 @property (readwrite) NSMutableData *buffer;
@@ -21,7 +22,7 @@ int const MAX_BUFFER_SIZE = 8;
 @implementation PSBHttpStreaming
 
 @synthesize callback, running, lastBuffer, bigBuffer,
-    client, response, buffer, url = url;
+    client, response, buffer, url, request;
 
 static NSRegularExpression *cometRegex = nil;
 static NSOperationQueue *httpQueue = nil;
@@ -51,7 +52,7 @@ static NSData *delimeter = nil;
 - (void)dealloc {
     [url release];
     [callback release];
-    [client release];
+    [request release];
     [response release];
     [lastBuffer release];
     [bigBuffer release];
@@ -59,18 +60,23 @@ static NSData *delimeter = nil;
 }
 
 - (void) start {
-    if(self.running) [NSException raise: @"running" format: @"Streaming is already in progress"];
-    self.running = true;
-    client = [NSURLRequest requestWithURL:[NSURL URLWithString: self.url]];
-    [[[NSURLConnection alloc] initWithRequest:client delegate:self] autorelease];
+    if(running) [NSException raise: @"running" format: @"Streaming is already in progress"];
+    running = true;
+    request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
+    [request setHTTPMethod: @"GET"];
+    [request setTimeoutInterval: 60.0 * 60.0];
+    client = [[[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:NO] autorelease];
+    [client setDelegateQueue: httpQueue];
+    [client start];
 }
 
 - (void) stop {
-
-}
-
-- (void) readBuffer:(NSURLResponse *)response {
-
+    if(!running) return;
+    running = false;
+    @try{
+        [client cancel];
+    }
+    @catch(id ex){ }
 }
 
 - (bool) hasData:(NSData *)buffer {
@@ -92,7 +98,32 @@ static NSData *delimeter = nil;
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
+    unsigned long length = [data length];
+    unsigned long iterations = length / MAX_BUFFER_SIZE;
+    unsigned long reads = iterations * MAX_BUFFER_SIZE;
+    int remains = length - reads;
 
+    for(int i = 0; i < iterations; i++){
+        int startIndex = i * MAX_BUFFER_SIZE;
+        int endIndex = startIndex + MAX_BUFFER_SIZE;
+        NSRange range = {startIndex, endIndex};
+        NSData *read = [data subdataWithRange: range];
+        [buffer appendData: read];
+        if([self hasData: read])
+            [self processBuffer: buffer];
+    }
+    if(remains > 0){
+        NSRange remainRange = {reads, length};
+        NSData *remain = [data subdataWithRange: remainRange];
+        [buffer appendData: remain];
+        if([self hasData: remain])
+            [self processBuffer: buffer];
+    }
+
+    if(length > MAX_BUFFER_SIZE){
+        NSRange lastRange = {length - MAX_BUFFER_SIZE, length};
+        [lastBuffer setData: [data subdataWithRange: lastRange]];
+    }
 }
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
