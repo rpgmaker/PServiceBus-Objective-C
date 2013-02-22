@@ -87,11 +87,20 @@ int main (int argc, const char * argv[])
 
         block(obj2);
 
-        PSBHttpStreaming *http = [[PSBHttpStreaming alloc] initWithUrl: @"http://yahoo.com"];
+        PSBHttpStreaming *http = [[PSBHttpStreaming alloc] initWithUrl: @"http://iomegatrix.com/HttpStreaming/?stream=test"];
+        [http onReceived: ^(NSString *result){
+            NSLog(@"%@", result);
+        }];
         [http start];
 
-        //getch();
+        [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
+            while(true){};
+        }];
 
+        [[NSOperationQueue mainQueue] waitUntilAllOperationsAreFinished];
+
+        //getch();
+        //[NSThread sleepForTimeInterval:90000];
 		//NSLog(@"%@", [NSString stringWithCString:@encode(TestObject) encoding:NSASCIIStringEncoding]);
 	}
 

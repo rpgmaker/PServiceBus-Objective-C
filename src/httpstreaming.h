@@ -15,6 +15,7 @@ extern int const MAX_BUFFER_SIZE;
 @property (readonly) NSURLResponse *response;
 
 @property (readonly) NSMutableData *buffer;
+@property (readonly) NSMutableData *stream;
 
 @property (readonly) NSString *url;
 
@@ -24,9 +25,11 @@ extern int const MAX_BUFFER_SIZE;
 
 - (void) stop;
 
-- (bool) hasData:(NSData *)buffer;
+- (void) readBuffer;
 
-- (void) processBuffer:(NSData *)buffer;
+- (bool) hasData:(NSData *)bufferData;
+
+- (void) processBuffer:(NSData *)bufferData;
 
 - (void) onReceived:(PSBOneStringBlock)value;
 

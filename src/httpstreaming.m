@@ -14,6 +14,7 @@ int const MAX_BUFFER_SIZE = 8;
 @property (readwrite) NSURLResponse *response;
 
 @property (readwrite) NSMutableData *buffer;
+@property (readwrite) NSMutableData *stream;
 
 @property (readwrite) NSString *url;
 
@@ -22,7 +23,7 @@ int const MAX_BUFFER_SIZE = 8;
 @implementation PSBHttpStreaming
 
 @synthesize callback, running, lastBuffer, bigBuffer,
-    client, response, buffer, url, request;
+    client, response, buffer, url, request, stream;
 
 static NSRegularExpression *cometRegex = nil;
 static NSOperationQueue *httpQueue = nil;
@@ -43,8 +44,10 @@ static NSData *delimeter = nil;
     self = [super init];
     if(self){
         self.url = value;
+        self.lastBuffer = [NSMutableData dataWithLength: MAX_BUFFER_SIZE];
         self.bigBuffer = [NSMutableData dataWithLength: MAX_BUFFER_SIZE * 2];
         self.buffer = [[NSMutableData alloc] init];
+        self.stream = [[NSMutableData alloc] init];
     }
     return self;
 }
@@ -64,9 +67,14 @@ static NSData *delimeter = nil;
     running = true;
     request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
     [request setHTTPMethod: @"GET"];
-    [request setTimeoutInterval: 60.0 * 60.0];
+    [request setTimeoutInterval: 60.0 * 60.0 * 24.0];
     client = [[[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:NO] autorelease];
     [client setDelegateQueue: httpQueue];
+
+    [httpQueue addOperationWithBlock: ^{
+        [self readBuffer];
+    }];
+
     [client start];
 }
 
@@ -79,12 +87,81 @@ static NSData *delimeter = nil;
     @catch(id ex){ }
 }
 
-- (bool) hasData:(NSData *)buffer {
+- (void) readBuffer {
+    while(running){
+        unsigned long bufferLength = [buffer length];
+        unsigned long currentLength = bufferLength - MAX_BUFFER_SIZE;
+        if(currentLength < 0) currentLength = 0;
+
+        NSRange readRange = {0, MAX_BUFFER_SIZE};
+        NSRange currentRange = {MAX_BUFFER_SIZE, currentLength};
+
+        NSData *read = [buffer subdataWithRange: readRange];
+        NSData *current = [buffer subdataWithRange: currentRange];
+
+        bool hasRead = [read length] > 0;
+
+        @synchronized(self){
+            [buffer setData: current];
+        }
+
+        if(hasRead)
+            [stream appendData: read];
+
+        if([self hasData: read])
+            [self processBuffer: stream];
+
+        [lastBuffer resetBytesInRange: readRange];
+
+        [lastBuffer replaceBytesInRange: readRange withBytes: [read bytes]];
+
+        if(read)
+            [read release];
+    }
+}
+
+- (bool) hasData:(NSData *)bufferData {
+    int count = 0;
+    const char *bufferBytes = [bufferData bytes];
+    const char *delimeterBytes = [delimeter bytes];
+    unsigned long delimeterLength = [delimeter length];
+    unsigned long bufferLength = [bufferData length];
+    for(int i = 0; i < bufferLength; i++){
+        if(bufferBytes[i] == delimeterBytes[i]) count++;
+    }
+    if(count == bufferLength) return true;
+    if(lastBuffer == nil) return false;
+
+    [bigBuffer replaceBytesInRange: NSMakeRange(0, MAX_BUFFER_SIZE) withBytes: [lastBuffer bytes]];
+    [bigBuffer replaceBytesInRange: NSMakeRange(MAX_BUFFER_SIZE, MAX_BUFFER_SIZE * 2) withBytes: [bufferData bytes]];
+
+
+    int delimeterIndex = 0;
+
+    const char *bigBufferBytes = [bigBuffer bytes];
+    for(int i = 0; i < [bigBuffer length]; i++){
+        if(bigBufferBytes[i] == delimeterBytes[delimeterIndex]){
+            if(++delimeterIndex == delimeterLength){
+                if(i < MAX_BUFFER_SIZE) return false;
+                else return true;
+            }
+        }else
+            delimeterIndex = 0;
+    }
     return false;
 }
 
-- (void) processBuffer:(NSData *)buffer {
-
+- (void) processBuffer:(NSData *)bufferData {
+    NSString *text = [[NSString alloc] initWithData: bufferData encoding: NSUTF8StringEncoding];
+    NSArray *matches = [cometRegex matchesInString: text options: NSMatchingReportCompletion
+        range: NSMakeRange(0, [text length])];
+    NSTextCheckingResult *result = [matches objectAtIndex: 0];
+    NSRange matchRange = [result rangeAtIndex: 1];
+    NSString *json = [text substringWithRange: matchRange];
+    [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
+        callback(json);
+    }];
+    [stream setLength: 0];
 }
 
 - (void) onReceived:(PSBOneStringBlock)value {
@@ -93,36 +170,14 @@ static NSData *delimeter = nil;
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
 {
-    NSLog(@"Received Response");
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
-    unsigned long length = [data length];
-    unsigned long iterations = length / MAX_BUFFER_SIZE;
-    unsigned long reads = iterations * MAX_BUFFER_SIZE;
-    unsigned long remains = length - reads;
-
-    for(int i = 0; i < iterations; i++){
-        int startIndex = i * MAX_BUFFER_SIZE;
-        int endIndex = startIndex + MAX_BUFFER_SIZE;
-        NSRange range = {startIndex, endIndex};
-        NSData *read = [data subdataWithRange: range];
-        [buffer appendData: read];
-        if([self hasData: read])
-            [self processBuffer: buffer];
-    }
-    if(remains > 0){
-        NSRange remainRange = {reads, length};
-        NSData *remain = [data subdataWithRange: remainRange];
-        [buffer appendData: remain];
-        if([self hasData: remain])
-            [self processBuffer: buffer];
-    }
-
-    if(length > MAX_BUFFER_SIZE){
-        NSRange lastRange = {length - MAX_BUFFER_SIZE, length};
-        [lastBuffer setData: [data subdataWithRange: lastRange]];
+    NSString *text = [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding];
+    NSLog(@"%@", text);
+    @synchronized(self){
+        [buffer appendData: data];
     }
 }
 
