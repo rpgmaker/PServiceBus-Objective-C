@@ -79,8 +79,8 @@ int main (int argc, const char * argv[])
         NSLog(@"signature %s", BlockSig(block));
         block(obj2);
 
-        //PSBHttpStreaming *http = [[PSBHttpStreaming alloc] initWithUrl: @"http://yahoo.com"];
-        //[http start];
+        PSBHttpStreaming *http = [[PSBHttpStreaming alloc] initWithUrl: @"http://yahoo.com"];
+        [http start];
 
         //getch();
 
