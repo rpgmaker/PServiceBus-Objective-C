@@ -76,7 +76,15 @@ int main (int argc, const char * argv[])
             NSLog(@"%@ %@", NSStringFromClass([o class]), o);
 
         };
-        NSLog(@"signature %s", BlockSig(block));
+
+        const char * types = BlockSig(block);
+        NSMethodSignature * sig = [NSMethodSignature signatureWithObjCTypes:types];
+
+        const char * param1 = [sig getArgumentTypeAtIndex: 1];
+
+        NSLog(@"signature %s, argument %s", types, param1);
+
+
         block(obj2);
 
         PSBHttpStreaming *http = [[PSBHttpStreaming alloc] initWithUrl: @"http://yahoo.com"];

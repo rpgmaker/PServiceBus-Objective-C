@@ -18,7 +18,7 @@
 
 + (NSString *) toJSONString:(id)obj {
     NSData *buffer = [self toJSONData: obj];
-    return [[NSString alloc] initWithData:buffer encoding:NSUTF8StringEncoding];
+    return [[[NSString alloc] initWithData:buffer encoding:NSUTF8StringEncoding] autorelease];
 }
 
 + (NSData *) toJSONData:(id)obj {
@@ -64,7 +64,7 @@
 
         if(prop == NULL) continue;
 
-        PSBPropertyInfo *propInfo = [[PSBPropertyInfo alloc] initWith: prop];
+        PSBPropertyInfo *propInfo = [[[PSBPropertyInfo alloc] initWith: prop] autorelease];
 
         NSString *key = propInfo.name;
 
@@ -114,7 +114,7 @@
 
         [obj setValue:value forKey:key];
     }
-    return obj;
+    return [obj autorelease];
 }
 
 @end

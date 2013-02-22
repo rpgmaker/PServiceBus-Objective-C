@@ -14,17 +14,16 @@ static NSOperationQueue *restQueue = nil;
 
 + (NSString *) invokeRequest:(NSString *)methodName value:(NSDictionary *)value {
 
-	NSMutableData *data = [[NSMutableData alloc] init];
+	NSMutableData *data = [[[NSMutableData alloc] init] autorelease];
 	NSURLResponse *response = nil;
 	NSError *error = nil;
-	NSError *jsonError = nil;
 
 	NSString *urlStr = [NSString stringWithFormat:@"%@%@?ReThrowException=%@&ESBUserName=%@&ESBPassword=%@&ConnectionID=%@",
 		[PSBClient endpoint], methodName, [NSNumber numberWithBool: ([PSBClient throwException] ? YES : NO)],
 		[PSBClient apikey], [PSBClient passcode], [PSBClient username]];
 
 	NSURL *url = [NSURL URLWithString:urlStr];
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url];
+    NSMutableURLRequest *request = [[[NSMutableURLRequest alloc] initWithURL:url] autorelease];
 
     NSData *buffer = [PSBJSONParser toJSONData: value];
 

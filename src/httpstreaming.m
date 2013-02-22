@@ -54,8 +54,8 @@ static NSData *delimeter = nil;
     [callback release];
     [request release];
     [response release];
-    [lastBuffer release];
     [bigBuffer release];
+    [lastBuffer release];
     [super dealloc];
 }
 
@@ -93,7 +93,7 @@ static NSData *delimeter = nil;
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
 {
-
+    NSLog(@"Received Response");
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
@@ -101,7 +101,7 @@ static NSData *delimeter = nil;
     unsigned long length = [data length];
     unsigned long iterations = length / MAX_BUFFER_SIZE;
     unsigned long reads = iterations * MAX_BUFFER_SIZE;
-    int remains = length - reads;
+    unsigned long remains = length - reads;
 
     for(int i = 0; i < iterations; i++){
         int startIndex = i * MAX_BUFFER_SIZE;

@@ -131,6 +131,7 @@ static NSString *endpoint;
         [handlers removeObjectForKey: topicName];
         if([handler respondsToSelector: @selector(stop)])
             [handler stop];
+        [handler release];
     }
 }
 
@@ -243,10 +244,9 @@ static NSString *endpoint;
             nil]
             callback: ^(NSString *result){
                 NSString *url = [NSString stringWithFormat: @"%@%@", endpoint,
-                    [NSString stringWithFormat: @"%@%@%@%d%d%@", STREAM_URL, [self username],
+                    [NSString stringWithFormat: @"%@%@%@%d%ld%@", STREAM_URL, [self username],
                         topicName, batchSize, interval, [self username]]
                 ];
-                [url release];
             }];
 }
 
