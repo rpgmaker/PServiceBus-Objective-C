@@ -31,7 +31,7 @@ static NSData *delimeter = nil;
 
 + (void) initialize {
     NSError *error = nil;
-    cometRegex = [NSRegularExpression regularExpressionWithPattern: @"(<comet)?>(?<Data>.+?)</comet>"
+    cometRegex = [NSRegularExpression regularExpressionWithPattern: @"(<comet)?>(.+?)<\/comet>"
         options:NSRegularExpressionCaseInsensitive error: &error];
 
     httpQueue = [[NSOperationQueue alloc] init];
@@ -70,12 +70,10 @@ static NSData *delimeter = nil;
     [request setTimeoutInterval: 60.0 * 60.0 * 24.0];
     client = [[[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:NO] autorelease];
     [client setDelegateQueue: httpQueue];
-
-    [httpQueue addOperationWithBlock: ^{
-        [self readBuffer];
-    }];
-
     [client start];
+
+    NSThread *thread = [[NSThread alloc] initWithTarget:self selector: @selector(readBuffer:) object: nil];
+    [thread start];
 }
 
 - (void) stop {
@@ -87,40 +85,49 @@ static NSData *delimeter = nil;
     @catch(id ex){ }
 }
 
-- (void) readBuffer {
+- (void) readBuffer:(id)obj {
     while(running){
-        unsigned long bufferLength = [buffer length];
-        unsigned long currentLength = bufferLength - MAX_BUFFER_SIZE;
-        if(currentLength < 0) currentLength = 0;
-
-        NSRange readRange = {0, MAX_BUFFER_SIZE};
-        NSRange currentRange = {MAX_BUFFER_SIZE, currentLength};
-
-        NSData *read = [buffer subdataWithRange: readRange];
-        NSData *current = [buffer subdataWithRange: currentRange];
-
-        bool hasRead = [read length] > 0;
-
         @synchronized(self){
-            [buffer setData: current];
+            unsigned long bufferLength = [buffer length];
+            unsigned long readLength = MAX_BUFFER_SIZE > bufferLength ? bufferLength : MAX_BUFFER_SIZE;
+            unsigned long currentLength = bufferLength - readLength;
+
+            if(currentLength < 1) currentLength = 0;
+            if(bufferLength == 0) {
+                continue;
+            }
+            NSRange readRange = {0, readLength};
+            NSRange currentRange = {readLength, currentLength};
+
+            NSData *read = [buffer subdataWithRange: readRange];
+            NSData *current = [buffer subdataWithRange: currentRange];
+
+            bool hasRead = [read length] > 0;
+
+
+            if(current)
+                [buffer setData: current];
+            else
+                [buffer resetBytesInRange: readRange];
+
+            if(hasRead)
+                [stream appendData: read];
+
+            if([self hasData: read])
+                [self processBuffer: stream];
+
+            [lastBuffer resetBytesInRange: readRange];
+
+            [lastBuffer replaceBytesInRange: readRange withBytes: [read bytes]];
+
+            if(read)
+                [read release];
         }
-
-        if(hasRead)
-            [stream appendData: read];
-
-        if([self hasData: read])
-            [self processBuffer: stream];
-
-        [lastBuffer resetBytesInRange: readRange];
-
-        [lastBuffer replaceBytesInRange: readRange withBytes: [read bytes]];
-
-        if(read)
-            [read release];
     }
 }
 
 - (bool) hasData:(NSData *)bufferData {
+    if(bufferData == nil) return false;
     int count = 0;
     const char *bufferBytes = [bufferData bytes];
     const char *delimeterBytes = [delimeter bytes];
@@ -153,11 +160,8 @@ static NSData *delimeter = nil;
 
 - (void) processBuffer:(NSData *)bufferData {
     NSString *text = [[NSString alloc] initWithData: bufferData encoding: NSUTF8StringEncoding];
-    NSArray *matches = [cometRegex matchesInString: text options: NSMatchingReportCompletion
-        range: NSMakeRange(0, [text length])];
-    NSTextCheckingResult *result = [matches objectAtIndex: 0];
-    NSRange matchRange = [result rangeAtIndex: 1];
-    NSString *json = [text substringWithRange: matchRange];
+    NSTextCheckingResult *result = [cometRegex firstMatchInString:text options:0 range:NSMakeRange(0, [text length])];
+    NSString *json = [text substringWithRange: [result rangeAtIndex: 2]];
     [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
         callback(json);
     }];
@@ -174,8 +178,6 @@ static NSData *delimeter = nil;
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
-    NSString *text = [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding];
-    NSLog(@"%@", text);
     @synchronized(self){
         [buffer appendData: data];
     }

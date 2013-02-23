@@ -25,7 +25,7 @@ extern int const MAX_BUFFER_SIZE;
 
 - (void) stop;
 
-- (void) readBuffer;
+- (void) readBuffer:(id)obj;
 
 - (bool) hasData:(NSData *)bufferData;
 
