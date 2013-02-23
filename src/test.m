@@ -89,16 +89,12 @@ int main (int argc, const char * argv[])
 
         PSBHttpStreaming *http = [[PSBHttpStreaming alloc] initWithUrl: @"http://iomegatrix.com/HttpStreaming/?stream=test"];
         [http onReceived: ^(NSString *result){
-            NSLog(@"%@", result);
+            NSLog(@"Result: %@", result);
         }];
         [http start];
 
-        [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
-            while(true){
-            };
-        }];
-
-        [[NSOperationQueue mainQueue] waitUntilAllOperationsAreFinished];
+        int number = 0;
+        scanf("%d", &number);
 
         //getch();
         //[NSThread sleepForTimeInterval:90000];

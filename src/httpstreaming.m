@@ -162,10 +162,15 @@ static NSData *delimeter = nil;
     NSString *text = [[NSString alloc] initWithData: bufferData encoding: NSUTF8StringEncoding];
     NSTextCheckingResult *result = [cometRegex firstMatchInString:text options:0 range:NSMakeRange(0, [text length])];
     NSString *json = [text substringWithRange: [result rangeAtIndex: 2]];
-    [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
+
+    #ifdef PSB_UI
+        dispatch_async(dispatch_get_main_queue(), ^{
+            callback(json);
+        });
+    #else
         callback(json);
-    }];
-    NSLog(@"%@", json);
+    #endif
+
     [stream setLength: 0];
 }
 
