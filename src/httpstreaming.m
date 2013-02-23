@@ -31,7 +31,7 @@ static NSData *delimeter = nil;
 
 + (void) initialize {
     NSError *error = nil;
-    cometRegex = [NSRegularExpression regularExpressionWithPattern: @"(<comet)?>(.+?)<\/comet>"
+    cometRegex = [NSRegularExpression regularExpressionWithPattern: @"(<comet)?>(.+?)</comet>"
         options:NSRegularExpressionCaseInsensitive error: &error];
 
     httpQueue = [[NSOperationQueue alloc] init];
@@ -165,6 +165,7 @@ static NSData *delimeter = nil;
     [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
         callback(json);
     }];
+    NSLog(@"%@", json);
     [stream setLength: 0];
 }
 

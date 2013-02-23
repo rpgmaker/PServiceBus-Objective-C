@@ -3,11 +3,12 @@
 #import "rest.h"
 #import "psb.h"
 #import "objectparser.h"
+#import "httpstreaming.h"
 
 
 NSString * const USERNAME_KEY = @"pservicebus_username_info";
 NSString * const ESBTOPIC_HEADERS = @"ESBTOPIC_HEADERS";
-NSString * const STREAM_URL = @"Stream/?Subscriber=%@&TransportName=%@&BatchSize=%@&Interval=%@&ConnectionID=%@&transport=httpstreaming";
+NSString * const STREAM_URL = @"Stream/?Subscriber=%@&TransportName=%@&BatchSize=%d&Interval=%ld&ConnectionID=%@&transport=httpstreaming";
 
 @implementation PSBClient
 
@@ -91,7 +92,7 @@ static NSString *endpoint;
 		case Redis:
 		{
 			return [[NSDictionary alloc] initWithObjectsAndKeys:
-				0, @"Format",
+                [NSNumber numberWithInt: 0], @"Format",
 				[PSBClient parseAddress: topicName], @"Path",
 				nil];
 		}
@@ -103,7 +104,7 @@ static NSString *endpoint;
 			NSString *ipAddress = (NSString *)[tokens objectAtIndex: 0];
 			int port = [(NSString *)[tokens objectAtIndex: 1] intValue];
 			return [[NSDictionary alloc] initWithObjectsAndKeys:
-				0, @"Format",
+                [NSNumber numberWithInt: 0], @"Format",
 				ipAddress, @"IPAddress",
 				port, @"Port",
 				[NSNumber numberWithBool: useSSL], @"UseSSL",
@@ -118,7 +119,7 @@ static NSString *endpoint;
 
 + (void) unSubscribeFromTopic:(NSString *)topicName {
     if(topicName == nil) [NSException raise: @"topicName" format: @"topicName cannot be nil"];
-    id handler;
+    PSBHttpStreaming *handler;
     [RestHelper invoke: @"Disconnect" value:
 		[[NSDictionary alloc] initWithObjectsAndKeys:
 			[self username], @"Subscriber",
@@ -127,10 +128,9 @@ static NSString *endpoint;
                 topicName, @"Name",
                 nil], @"Transport",
 		nil]];
-    if((handler = [handlers objectForKey: topicName]) != nil){
+    if((handler = (PSBHttpStreaming *)[handlers objectForKey: topicName]) != nil){
         [handlers removeObjectForKey: topicName];
-        if([handler respondsToSelector: @selector(stop)])
-            [handler stop];
+        [handler stop];
         [handler release];
     }
 }
@@ -141,9 +141,9 @@ static NSString *endpoint;
 		[settings removeObjectForKey: USERNAME_KEY];
 	}
 	NSEnumerator *enumerator = [handlers objectEnumerator];
-	id handler;
-	while((handler = [enumerator nextObject])){
-		if([handler respondsToSelector: @selector(stop)])
+	PSBHttpStreaming *handler;
+	while((handler = (PSBHttpStreaming *)[enumerator nextObject])){
+		if(handler)
             [handler stop];
 	}
 	if(onDisconnect) onDisconnect();
@@ -244,9 +244,16 @@ static NSString *endpoint;
             nil]
             callback: ^(NSString *result){
                 NSString *url = [NSString stringWithFormat: @"%@%@", endpoint,
-                    [NSString stringWithFormat: @"%@%@%@%d%ld%@", STREAM_URL, [self username],
+                    [NSString stringWithFormat: STREAM_URL, [self username],
                         topicName, batchSize, interval, [self username]]
                 ];
+                PSBHttpStreaming *handler = [[PSBHttpStreaming alloc] initWithUrl: url];
+                [handler onReceived: ^(NSString *json) {
+                    id obj = [PSBJSONParser jsonToObject: json clazz: clazz];
+                    callback(obj);
+                }];
+                [handler start];
+                [handlers setValue: handler forKey: topicName];
             }];
 }
 
@@ -284,12 +291,12 @@ static NSString *endpoint;
 
     if(groupID && sequenceID > 0){
         [headerDict setValue: groupID forKey: @"ESB_GROUP_ID"];
-        [headerDict setValue: [NSString stringWithFormat: @"%d", sequenceID] forKey: @"ESB_SEQUENCE_ID"];
+        [headerDict setValue: [NSString stringWithFormat: @"%ld", sequenceID] forKey: @"ESB_SEQUENCE_ID"];
     }
 
     if(clazz != [NSArray class]) {
         message = [[NSArray alloc] initWithObjects:
-            [PSBJSONParser objectToDictionary: message]];
+            [PSBJSONParser objectToDictionary: message], nil];
     }else {
         NSArray *arry = (NSArray *)message;
         id item = [arry objectAtIndex: 0];
@@ -310,7 +317,7 @@ static NSString *endpoint;
 
     [RestHelper invoke: @"PublishTopic" value:
 		[[NSDictionary alloc] initWithObjectsAndKeys:
-			[NSString stringWithFormat: @"%d", expiresIn], @"ExpiresIn",
+			[NSNumber numberWithLong: expiresIn], @"ExpiresIn",
 			topicName, @"Topic",
 			[NSDictionary dictionaryWithDictionary: headerDict], @"Headers",
 			message, @"Messages",

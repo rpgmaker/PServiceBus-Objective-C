@@ -94,7 +94,8 @@ int main (int argc, const char * argv[])
         [http start];
 
         [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
-            while(true){};
+            while(true){
+            };
         }];
 
         [[NSOperationQueue mainQueue] waitUntilAllOperationsAreFinished];

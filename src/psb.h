@@ -7,7 +7,7 @@ extern NSString * const STREAM_URL;
 
 typedef void (^PSBVoidBlock)(void);
 
-typedef void (^PSBMessageBlock)(id * message);
+typedef void (^PSBMessageBlock)(id message);
 
 typedef enum {
     MSMQ = 0,
