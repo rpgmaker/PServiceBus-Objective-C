@@ -243,7 +243,7 @@ static NSString *endpoint;
                 nil], @"Transport",
             nil]
             callback: ^(NSString *result){
-                NSString *url = [NSString stringWithFormat: @"%@%@", endpoint,
+                NSString *url = [NSString stringWithFormat: @"%@%@", [self endpoint],
                     [NSString stringWithFormat: STREAM_URL, [self username],
                         topicName, batchSize, interval, [self username]]
                 ];

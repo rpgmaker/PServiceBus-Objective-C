@@ -1,104 +1,54 @@
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 #import "psb.h"
-#import "objectparser.h"
-#import "httpstreaming.h"
 
-@interface TestObject : NSObject {}
+@interface ChatTopic : NSObject {}
 
-@property (retain) NSString *setting;
+@property (retain) NSString *UserName;
+@property (retain) NSString *Message;
 
-@end
-
-@implementation TestObject
-
-@synthesize setting;
+- (id) initWith:(NSString *)username message:(NSString *)message;
 
 @end
 
-struct BlockDescriptor {
-    unsigned long reserved;
-    unsigned long size;
-    void *rest[1];
-};
+@implementation ChatTopic
 
-struct Block {
-    void *isa;
-    int flags;
-    int reserved;
-    void *invoke;
-    struct BlockDescriptor *descriptor;
-};
+@synthesize UserName, Message;
 
-static const char *BlockSig(id blockObj)
-{
-    struct Block *block = (void *)blockObj;
-    struct BlockDescriptor *descriptor = block->descriptor;
-
-    int copyDisposeFlag = 1 << 25;
-    int signatureFlag = 1 << 30;
-
-    assert(block->flags & signatureFlag);
-
-    int index = 0;
-    if(block->flags & copyDisposeFlag)
-        index += 2;
-
-    return descriptor->rest[index];
+- (id) initWith:(NSString *)username message:(NSString *)message {
+    if(self = [super init]){
+        self.UserName = username;
+        self.Message = message;
+    }
+    return self;
 }
+
+@end
 
 int main (int argc, const char * argv[])
 {
 	@autoreleasepool {
-		NSDictionary *value = [[NSDictionary alloc] initWithObjectsAndKeys:
-			@"ChatTopic", @"name",
-			nil];
 
-		TestObject *obj = [[TestObject alloc] init];
-		obj.setting = @"Testing";
+	    [PSBClient endpoint: @"http://192.168.56.1:8087/ESB"];
 
-		//NSString *name =  NSStringFromClass([obj class]);
+	    [PSBClient address: @"endpoint://guest:guest@192.168.56.1:5672/"];
 
-		//NSLog(@"%@", name);
+		ChatTopic *chat = [[ChatTopic alloc] initWith: @"Objective-C" message: @"Hello world"];
 
-		//[RestHelper invoke: @"SelectTopic" value:value callback: ^(NSString * result) {
-		//	NSLog(@"%@", result);
-		//}];
+        NSLog(@"Type a message to publish. Type exit to close program...");
 
-		NSString *json = [PSBJSONParser toJSONString: obj];
-
-		NSLog(@"%@", json);
-		TestObject *obj2 = (TestObject *)[PSBJSONParser jsonToObject: json clazz: [TestObject class]];
-		NSLog(@"%@", obj2.setting);
-
-
-        void (^block)(TestObject *) = ^(TestObject *o) {
-            NSLog(@"%@ %@", NSStringFromClass([o class]), o);
-
-        };
-
-        const char * types = BlockSig(block);
-        NSMethodSignature * sig = [NSMethodSignature signatureWithObjCTypes:types];
-
-        const char * param1 = [sig getArgumentTypeAtIndex: 1];
-
-        NSLog(@"signature %s, argument %s", types, param1);
-
-
-        block(obj2);
-
-        PSBHttpStreaming *http = [[PSBHttpStreaming alloc] initWithUrl: @"http://iomegatrix.com/HttpStreaming/?stream=test"];
-        [http onReceived: ^(NSString *result){
-            NSLog(@"Result: %@", result);
+        [PSBClient subscribe: [ChatTopic class] callback: ^(ChatTopic *msg) {
+            NSLog(@"%@: %@", msg.UserName, msg.Message);
         }];
-        [http start];
 
-        int number = 0;
-        scanf("%d", &number);
-
-        //getch();
-        //[NSThread sleepForTimeInterval:90000];
-		//NSLog(@"%@", [NSString stringWithCString:@encode(TestObject) encoding:NSASCIIStringEncoding]);
+        char word[1024];
+        while(true){
+            scanf("%s", word);
+            NSString *text = [[NSString alloc] initWithCString:word encoding:NSUTF8StringEncoding];
+            if([text isEqualToString: @"exit"]) break;
+            chat.Message = text;
+            [PSBClient publish: chat];
+        }
 	}
 
 	return 0;

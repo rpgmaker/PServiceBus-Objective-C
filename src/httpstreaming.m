@@ -178,9 +178,7 @@ static NSData *delimeter = nil;
     self.callback = value;
 }
 
-- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
-{
-}
+- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response { }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
@@ -189,15 +187,11 @@ static NSData *delimeter = nil;
     }
 }
 
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
-{
-
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+    NSLog(@"Connection failed due to error %@", [error localizedDescription]);
 }
 
-- (void)connectionDidFinishLoading:(NSURLConnection *)connection
-{
-
-}
+- (void)connectionDidFinishLoading:(NSURLConnection *)connection { }
 
 
 @end
