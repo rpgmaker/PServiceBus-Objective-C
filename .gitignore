@@ -16,7 +16,6 @@
 *.ilk
 *.log
 *.lib
-*.exe
 *.sbr
 *.scc
 [Bb]in
