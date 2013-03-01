@@ -8,7 +8,7 @@
 
 NSString * const USERNAME_KEY = @"pservicebus_username_info";
 NSString * const ESBTOPIC_HEADERS = @"ESBTOPIC_HEADERS";
-NSString * const STREAM_URL = @"Stream/?Subscriber=%@&TransportName=%@&BatchSize=%d&Interval=%ld&ConnectionID=%@&transport=httpstreaming";
+NSString * const STREAM_URL = @"Stream/?Subscriber=%@&TransportName=%@&BatchSize=%d&Interval=%ld&ConnectionID=%@&transport=httpstreaming&durable=%@";
 
 @implementation PSBClient
 
@@ -245,7 +245,7 @@ static NSString *endpoint;
             callback: ^(NSString *result){
                 NSString *url = [NSString stringWithFormat: @"%@%@", [self endpoint],
                     [NSString stringWithFormat: STREAM_URL, [self username],
-                        topicName, batchSize, interval, [self username]]
+                        topicName, batchSize, interval, [self username], (durable ? @"true" : @"false")]
                 ];
                 PSBHttpStreaming *handler = [[PSBHttpStreaming alloc] initWithUrl: url];
                 [handler onReceived: ^(NSString *json) {

@@ -187,9 +187,7 @@ static NSData *delimeter = nil;
     }
 }
 
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-    NSLog(@"Connection failed due to error %@", [error localizedDescription]);
-}
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error { }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection { }
 
