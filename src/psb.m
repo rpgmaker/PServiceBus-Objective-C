@@ -38,7 +38,7 @@ static NSString *endpoint;
 	//Register notification for application exit to run on main thread
 	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
 	[center addObserverForName: NSApplicationWillTerminateNotification object:nil
-        queue: nil usingBlock: ^(NSNotification * _){
+        queue: [NSOperationQueue mainQueue] usingBlock: ^(NSNotification * _){
             NSLog(@"Disconnecting from ESB");
             [PSBClient disconnect];
     }];
