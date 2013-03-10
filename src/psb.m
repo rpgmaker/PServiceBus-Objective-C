@@ -34,6 +34,14 @@ static NSString *endpoint;
 	transport = RabbitMQ;
 	handlers = [[NSMutableDictionary alloc] init];
 	topics = [[[NSMutableDictionary alloc] init] autorelease];
+
+	//Register notification for application exit to run on main thread
+	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+	[center addObserverForName: NSApplicationWillTerminateNotification object:nil
+        queue: nil usingBlock: ^(NSNotification * _){
+            NSLog(@"Disconnecting from ESB");
+            [PSBClient disconnect];
+    }];
 }
 
 
